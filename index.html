@@ -23,6 +23,8 @@
     --accent-dim: #7c6cff33;
     --accent-glow: #7c6cff55;
     --good: #35d493;
+    --gold: #ffc75a;
+    --gold-glow: #ffc75a55;
     --warn: #ffb454;
     --bad: #ff6b6b;
     --radius: 16px;
@@ -282,9 +284,71 @@
     border-color: var(--accent);
     color: #fff;
   }
+  /* Heutiger Tag: goldener Ring, damit man auf einen Blick sieht, was ansteht */
   .day-btn.today{
-    box-shadow: 0 0 0 2px var(--accent-glow);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold-glow);
+    color: var(--gold);
   }
+  .day-btn.today .mark{ color: var(--gold); }
+  /* Schon abgehakt: lila Fuellung bleibt, der goldene Ring auch */
+  .day-btn.today.done{ color: #fff; }
+  .day-btn.today.done .mark{ color: #fff; }
+
+  /* ---------- Sicherung ---------- */
+  .backup-hint{
+    display:flex; align-items:center; gap:8px;
+    background: #ffc75a14;
+    border: 1px solid #ffc75a3d;
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    margin-top: 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .sheet{
+    position: fixed; inset: 0; z-index: 50;
+    background: var(--bg);
+    overflow-y: auto;
+    padding: calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  .sheet-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 18px;
+  }
+  .sheet-head h2{ font-size: 18px; margin: 0; }
+  .sheet-head button{
+    background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 999px; padding: 8px 16px; font-size: 14px; font-family: inherit; cursor: pointer;
+  }
+  .sheet h3{ font-size: 15px; margin: 22px 0 8px; }
+  .sheet p{ color: var(--text-dim); font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+  .sheet-btn{
+    display:block; width:100%; text-align:center;
+    background: var(--card); border: 1px solid var(--border); color: var(--accent);
+    border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-weight: 600;
+    font-family: inherit; cursor: pointer; margin-bottom: 10px;
+  }
+  .sheet-btn.primary{ background: var(--accent); border-color: var(--accent); color: #fff; }
+  .sheet-info{
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px; margin-bottom: 18px;
+  }
+  .sheet textarea{
+    width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius-sm); padding: 10px; font-family: inherit; font-size: 13px;
+    margin-bottom: 10px; resize: none;
+  }
+  .toast{
+    position: fixed; left: 16px; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom));
+    z-index: 60; background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius-sm); padding: 13px 16px; font-size: 14px; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    opacity: 0; transform: translateY(10px); transition: opacity .2s ease, transform .2s ease;
+    pointer-events: none;
+  }
+  .toast.an{ opacity: 1; transform: none; }
 
   /* ---------- Add category ---------- */
   .add-card{
@@ -336,7 +400,10 @@
         <div class="overall-pct" id="overallPct">0%</div>
         <div class="overall-label">Gesamtfortschritt diese Woche</div>
       </div>
-      <div class="streak-badge"><span class="flame">🔥</span><span id="streakVal">0</span> Wochen</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="streak-badge"><span class="flame">🔥</span><span id="streakVal">0</span> Wochen</div>
+        <button class="icon-btn" id="backupBtn" aria-label="Daten &amp; Sicherung" title="Daten &amp; Sicherung">💾</button>
+      </div>
     </div>
     <div class="overall-bar-track"><div class="overall-bar-fill" id="overallBar" style="width:0%"></div></div>
 
@@ -357,6 +424,31 @@
     <button class="add-btn" id="addCatBtn">+</button>
   </div>
 
+  <div class="backup-hint" id="backupHint" hidden></div>
+
+</div>
+
+<div class="sheet" id="backupSheet" hidden>
+  <div class="sheet-head">
+    <h2>Daten &amp; Sicherung</h2>
+    <button id="backupClose">Fertig</button>
+  </div>
+
+  <div class="sheet-info" id="backupStatus"></div>
+
+  <h3>Sicherung erstellen</h3>
+  <p>Deine Häkchen liegen nur auf diesem Gerät. Sichere sie am besten einmal pro Woche – in „Dateien“, iCloud oder als Mail an dich selbst. Dann sind sie auch nach einem Handywechsel noch da.</p>
+  <button class="sheet-btn primary" id="backupShare" hidden>📤 Sicherung teilen oder ablegen</button>
+  <button class="sheet-btn" id="backupDownload">⬇︎ Als Datei sichern</button>
+  <button class="sheet-btn" id="backupCopy">📋 In die Zwischenablage kopieren</button>
+
+  <h3>Sicherung einspielen</h3>
+  <p>Ersetzt <b>alle</b> Daten auf diesem Gerät durch die Sicherung. Du wirst vorher noch einmal gefragt.</p>
+  <label class="sheet-btn" style="display:block;">📁 Datei auswählen
+    <input type="file" accept=".json,application/json" id="backupFile" style="display:none;">
+  </label>
+  <textarea id="backupText" rows="3" placeholder="…oder kopierten Sicherungstext hier einfügen"></textarea>
+  <button class="sheet-btn" id="backupFromText">Aus Text wiederherstellen</button>
 </div>
 
 <script>
@@ -689,7 +781,163 @@
     if(e.key === "Enter") addCategory();
   });
 
+
+  // ---------- Sicherung (Export / Import) ----------
+  const SICHERUNG_INTERVALL_TAGE = 7;   // ab wann an eine neue Sicherung erinnert wird
+
+  let toastTimer = null;
+  function toast(text){
+    let el = document.getElementById("toast");
+    if(!el){
+      el = document.createElement("div");
+      el.id = "toast"; el.className = "toast";
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    // Reflow erzwingen statt requestAnimationFrame: rAF pausiert, wenn die Seite
+    // gerade nicht sichtbar ist, der Hinweis bliebe sonst unsichtbar haengen.
+    el.classList.remove("an");
+    void el.offsetWidth;
+    el.classList.add("an");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("an"), 2800);
+  }
+
+  function sicherungJSON(){
+    return JSON.stringify({ app: "Daily", version: 1, exportiertAm: new Date().toISOString(), daten: data }, null, 2);
+  }
+  function sicherungDateiname(){
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    return `daily-sicherung-${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}.json`;
+  }
+  function tageSeitSicherung(){
+    if(!data.letzteSicherung) return null;
+    return Math.floor((Date.now() - new Date(data.letzteSicherung).getTime()) / 86400000);
+  }
+  function sicherungNotiere(){
+    data.letzteSicherung = new Date().toISOString();
+    saveData();
+    aktualisiereSicherungsAnzeige();
+  }
+
+  async function sicherungTeilen(){
+    const name = sicherungDateiname();
+    let datei = null;
+    try{ datei = new File([sicherungJSON()], name, { type: "application/json" }); }catch(e){}
+    if(datei && navigator.canShare && navigator.canShare({ files: [datei] })){
+      try{
+        await navigator.share({ files: [datei], title: "Daily-Sicherung" });
+        sicherungNotiere();
+        toast("Gesichert: " + name);
+      }catch(e){ /* vom Nutzer abgebrochen */ }
+      return;
+    }
+    sicherungHerunterladen();
+  }
+  function sicherungHerunterladen(){
+    try{
+      const name = sicherungDateiname();
+      const url = URL.createObjectURL(new Blob([sicherungJSON()], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      sicherungNotiere();
+      toast("Gesichert: " + name);
+    }catch(e){ alert("Download hat nicht geklappt. Versuch es über „Teilen“."); }
+  }
+  async function sicherungKopieren(){
+    try{
+      await navigator.clipboard.writeText(sicherungJSON());
+      sicherungNotiere();
+      toast("Kopiert – füg sie z.B. in eine Notiz ein");
+    }catch(e){
+      alert("Kopieren hat nicht geklappt. Nutz stattdessen „Teilen“ oder „Als Datei sichern“.");
+    }
+  }
+  function sicherungEinspielen(text){
+    let neu;
+    try{
+      const roh = JSON.parse(text);
+      neu = (roh && roh.daten) ? roh.daten : roh;
+    }catch(e){ alert("Das ist keine gültige Daily-Sicherung."); return; }
+    if(!neu || !Array.isArray(neu.categories) || !neu.weeks){
+      alert("Das ist keine gültige Daily-Sicherung.");
+      return;
+    }
+    const wochen = Object.keys(neu.weeks).length;
+    if(!confirm(`Sicherung mit ${neu.categories.length} Kategorien und ${wochen} ${wochen === 1 ? "Woche" : "Wochen"} einspielen? ALLE Daten auf diesem Gerät werden dadurch ersetzt.`)) return;
+    data = neu;
+    saveData();
+    schliesseSicherung();
+    render();
+    toast(`Sicherung eingespielt – ${wochen} ${wochen === 1 ? "Woche" : "Wochen"} wiederhergestellt`);
+  }
+
+  const backupSheet = document.getElementById("backupSheet");
+  function oeffneSicherung(){
+    aktualisiereSicherungsAnzeige();
+    backupSheet.hidden = false;
+    window.scrollTo(0, 0);
+  }
+  function schliesseSicherung(){ backupSheet.hidden = true; }
+
+  function aktualisiereSicherungsAnzeige(){
+    const wochen = Object.keys(data.weeks || {}).length;
+    const tage = tageSeitSicherung();
+    const letzte = data.letzteSicherung
+      ? new Date(data.letzteSicherung).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" })
+        + ", " + new Date(data.letzteSicherung).toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" })
+      : null;
+    const statusEl = document.getElementById("backupStatus");
+    if(statusEl){
+      statusEl.innerHTML =
+        '<div style="color:var(--text-dim); font-size:12px;">Auf diesem Gerät gespeichert</div>'
+        + `<div style="font-weight:700; margin:4px 0;">${data.categories.length} Kategorien · ${wochen} ${wochen === 1 ? "Woche" : "Wochen"} erfasst</div>`
+        + `<div style="color:var(--text-dim); font-size:12px;">${letzte ? "Letzte Sicherung: " + letzte : "Noch keine Sicherung erstellt"}</div>`
+        + '<div style="color:var(--text-dim); font-size:12px; margin-top:10px;">Dateiname enthält Datum und Uhrzeit.</div>';
+    }
+    // Erinnerung nur zeigen, wenn wirklich faellig
+    const hint = document.getElementById("backupHint");
+    if(hint){
+      if(tage === null){
+        hint.hidden = false;
+        hint.innerHTML = '<span>💾</span><span>Noch keine Sicherung – tipp hier, um deine Daten zu sichern.</span>';
+      } else if(tage >= SICHERUNG_INTERVALL_TAGE){
+        hint.hidden = false;
+        hint.innerHTML = `<span>💾</span><span>Letzte Sicherung ist ${tage} Tage her – Zeit für eine neue.</span>`;
+      } else {
+        hint.hidden = true;
+      }
+    }
+  }
+
+  document.getElementById("backupBtn").addEventListener("click", oeffneSicherung);
+  document.getElementById("backupClose").addEventListener("click", schliesseSicherung);
+  document.getElementById("backupHint").addEventListener("click", oeffneSicherung);
+  document.getElementById("backupDownload").addEventListener("click", sicherungHerunterladen);
+  document.getElementById("backupCopy").addEventListener("click", sicherungKopieren);
+  const shareBtn = document.getElementById("backupShare");
+  if(navigator.share){
+    shareBtn.hidden = false;
+    shareBtn.addEventListener("click", sicherungTeilen);
+  }
+  document.getElementById("backupFile").addEventListener("change", function(){
+    const datei = this.files && this.files[0];
+    if(!datei) return;
+    const leser = new FileReader();
+    leser.onload = () => sicherungEinspielen(String(leser.result));
+    leser.readAsText(datei);
+    this.value = "";
+  });
+  document.getElementById("backupFromText").addEventListener("click", () => {
+    const feld = document.getElementById("backupText");
+    if(feld && feld.value.trim()) sicherungEinspielen(feld.value);
+    else alert("Bitte zuerst den Sicherungstext einfügen.");
+  });
+
   render();
+  aktualisiereSicherungsAnzeige();
 })();
 </script>
 </body>
