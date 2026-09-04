@@ -23,8 +23,8 @@
     --accent-dim: #7c6cff33;
     --accent-glow: #7c6cff55;
     --good: #35d493;
-    --gold: #ffc75a;
-    --gold-glow: #ffc75a55;
+    --today-ring: #b3a8ff;
+    --today-glow: #7c6cff66;
     --warn: #ffb454;
     --bad: #ff6b6b;
     --radius: 16px;
@@ -284,22 +284,27 @@
     border-color: var(--accent);
     color: #fff;
   }
-  /* Heutiger Tag: goldener Ring, damit man auf einen Blick sieht, was ansteht */
+  /* Heutiger Tag: kraeftiger lila Ring, damit man auf einen Blick sieht, was ansteht */
   .day-btn.today{
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px var(--gold-glow);
-    color: var(--gold);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--today-glow);
+    color: var(--today-ring);
   }
-  .day-btn.today .mark{ color: var(--gold); }
-  /* Schon abgehakt: lila Fuellung bleibt, der goldene Ring auch */
-  .day-btn.today.done{ color: #fff; }
+  .day-btn.today .mark{ color: var(--today-ring); }
+  /* Schon abgehakt: helleres Lila fuer den Ring, damit er sich von der
+     lila Fuellung abhebt statt darin unterzugehen */
+  .day-btn.today.done{
+    border-color: var(--today-ring);
+    box-shadow: 0 0 0 2px var(--today-glow);
+    color: #fff;
+  }
   .day-btn.today.done .mark{ color: #fff; }
 
   /* ---------- Sicherung ---------- */
   .backup-hint{
     display:flex; align-items:center; gap:8px;
-    background: #ffc75a14;
-    border: 1px solid #ffc75a3d;
+    background: #7c6cff14;
+    border: 1px solid #7c6cff3d;
     color: var(--text);
     border-radius: var(--radius-sm);
     padding: 11px 13px;
